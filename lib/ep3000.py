@@ -59,7 +59,12 @@ class StatusCommand(Command):
         super(StatusCommand, self).__init__('Q1')
 
     def check_result(self, result):
-        return result[:1] == '(' and result[-1:] == '\r' and len(result[1:-1].split(' ')) == 8
+        if not result[:1] == '(' or not result[-1:] == '\r':
+            return False
+        segments = result[1:-1].split(' ')
+        if len(segments) != 8:
+            return False
+        return len(segments[7]) == 8
 
     def parse_result(self, result):
         data = result[1:-1].split(' ')
