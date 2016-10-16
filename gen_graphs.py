@@ -8,4 +8,11 @@ time.tzset()
 period = 'hourly'
 if len(sys.argv) > 1:
     period = sys.argv[1]
-rrd.generate_graphs(period)
+
+if period == 'all':
+    for period in ('hourly', 'daily', 'weekly', 'monthly', 'yearly'):
+        rrd.generate_graphs(period)
+        rrd.generate_graphs(period, True)
+else:
+    rrd.generate_graphs(period)
+    rrd.generate_graphs(period, True)
