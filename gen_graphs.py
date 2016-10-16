@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-import time, os
+import time, os, sys
 from lib import *
 
 os.environ['TZ'] = "Asia/Bangkok"
 time.tzset()
 
-for period in ('hourly', 'daily', 'weekly', 'monthly', 'yearly'):
-    rrd.generate_graphs(period)
+period = 'hourly'
+if len(sys.argv) > 1:
+    period = sys.argv[1]
+rrd.generate_graphs(period)

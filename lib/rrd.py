@@ -79,6 +79,8 @@ def generate_graphs(sched = 'hourly'):
         period = 'h'
     elif sched == 'yearly':
         period = 'y'
+    else:
+        raise Exception("Unknown range kind: %s"%(sched))
     for ds in EP3000_DATA_NAMES:
         name = ds['name']
         file = "%s/ep3000-%s-%s.png" % (TMP_PATH, name, sched)
