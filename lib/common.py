@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import threading
+import time
 
 from main import exiting_app
 
@@ -23,14 +24,17 @@ class ObjectDict(dict):
 
 
 def set_interval(func, sec):
-    def func_wrapper():
-        if exiting_app: return
-        n = set_interval(func, sec)
-        try:
+    def thread():
+        start = time.time()
+        next = start + sec
+        while not exiting_app:
             func()
-        except:
-            n.cancel()
-            raise
-    t = threading.Timer(sec, func_wrapper)
+            now = time.time()
+            if now >= next:
+                next = now + (int((now - start) / sec) + 1) * sec
+            else:
+                time.sleep(next - now)
+
+    t = threading.Thread(target = thread)
     t.start()
     return t

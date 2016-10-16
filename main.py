@@ -4,7 +4,9 @@ from lib import *
 
 
 def main():
-    print StatusCommand().send().payload.battery_voltage
+    #print StatusCommand().send().payload
+    print rrd.create_ep3000()
+    #rrd.generate_graphs()
 
 exiting_app = False
 if __name__ == '__main__':

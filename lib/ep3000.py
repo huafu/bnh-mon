@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import re
 import time
 import serial
 from decimal import *
@@ -17,6 +18,7 @@ _serial = serial.Serial(
 
 def send(command):
     _serial.write('{0:s}\r'.format(command))
+    _serial.flush()
     return _serial.readline()
 
 
@@ -35,36 +37,43 @@ class Command(object):
     def parse_result(self, result):
         return result
 
-    def send(self):
+    def send(self, max_tries = 10, sleep = .5):
         tries = 0
         res = None
         while True:
+            if max_tries and tries > max_tries:
+                print 'Last try (#%s) result: %s'%(tries, res)
+                raise TooManyTriesException()
+
             tries += 1
-            if tries > 10: raise TooManyTriesException()
             try:
                 res = send(self.code)
             except serial.SerialException:
                 continue
             if self.check_result(res): break
-            time.sleep(.1)
+            time.sleep(sleep)
+
         self.last_result = ObjectDict({
             "timestamp": time.time(),
+            "tries": tries,
             "payload": self.parse_result(res),
         })
+
         return self.last_result
 
 
 class StatusCommand(Command):
+    checker = re.compile(
+        r'^\([0-9]{3}\.[0-9] [0-9]{3}\.[0-9] [0-9]{3}\.[0-9] [0-9]{3}'
+        r' [0-9]{2}\.[0-9] (?:[0-9]{2}\.[0-9]|[0-9]\.[0-9]{2})'
+        r' [0-9]{2}\.[0-9] [01]{2}.[01]{5}\r$'
+    )
+
     def __init__(self):
         super(StatusCommand, self).__init__('Q1')
 
     def check_result(self, result):
-        if not result[:1] == '(' or not result[-1:] == '\r':
-            return False
-        segments = result[1:-1].split(' ')
-        if len(segments) != 8:
-            return False
-        return len(segments[7]) == 8
+        return bool(type(self).checker.match(result))
 
     def parse_result(self, result):
         data = result[1:-1].split(' ')
@@ -80,6 +89,7 @@ class StatusCommand(Command):
             "shuttdown_active": bits[6],
             "beeper_on": bits[7],
         })
+
         return ObjectDict({
             "status": status,
             "input_voltage": Decimal(data[0]),

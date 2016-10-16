@@ -1,20 +1,21 @@
 #!/usr/bin/env python
 
+import time
 from lib import *
-
 
 def main():
     status = ep3000.StatusCommand()
 
-    def update_rrd():
-        payload = status.send().payload
-        print 'logged to rrd - load: %d%% - batt: %dV' % (
+    while not exiting_app:
+        msg = status.send(max_tries = 0)
+        payload = msg.payload
+        rrd.update_ep3000(payload)
+        print 'logged to rrd (%s tries) - load: %d%% - batt: %dV' % (
+            msg.tries,
             payload.output_load,
             payload.battery_voltage
         )
-        rrd.update_ep3000(payload)
-
-    common.set_interval(update_rrd, 10)
+        time.sleep(1)
 
 
 exiting_app = False
