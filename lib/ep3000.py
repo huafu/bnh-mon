@@ -3,6 +3,7 @@
 import time
 import serial
 from decimal import *
+from common import ObjectDict
 
 _serial = serial.Serial(
     port = '/dev/ttyUSB0',
@@ -19,6 +20,10 @@ def send(command):
     return _serial.readline()
 
 
+class TooManyTriesException(Exception):
+    pass
+
+
 class Command(object):
     def __init__(self, code):
         self.code = code
@@ -31,15 +36,21 @@ class Command(object):
         return result
 
     def send(self):
+        tries = 0
         res = None
-        while 1:
-            res = send(self.code)
+        while True:
+            tries += 1
+            if tries > 10: raise TooManyTriesException()
+            try:
+                res = send(self.code)
+            except serial.SerialException:
+                continue
             if self.check_result(res): break
             time.sleep(.1)
-        self.last_result = {
+        self.last_result = ObjectDict({
             "timestamp": time.time(),
             "payload": self.parse_result(res),
-        }
+        })
         return self.last_result
 
 
@@ -48,13 +59,13 @@ class StatusCommand(Command):
         super(StatusCommand, self).__init__('Q1')
 
     def check_result(self, result):
-        return result[:1] == '(' and result[-1:] == '\r'
+        return result[:1] == '(' and result[-1:] == '\r' and len(result[1:-1].split(' ')) == 8
 
     def parse_result(self, result):
         data = result[1:-1].split(' ')
-        bits = map(lambda bit: bool(int(bit)), list(data[7]))
+        bits = map(lambda c: False if c == '0' else True, list(data[7]))
 
-        status = {
+        status = ObjectDict({
             "utility_fail": bits[0],
             "battery_low": bits[1],
             "avr_active": bits[2],
@@ -63,8 +74,8 @@ class StatusCommand(Command):
             "test_in_progress": bits[5],
             "shuttdown_active": bits[6],
             "beeper_on": bits[7],
-        }
-        return {
+        })
+        return ObjectDict({
             "status": status,
             "input_voltage": Decimal(data[0]),
             "input_fault_voltage": Decimal(data[1]),
@@ -73,4 +84,4 @@ class StatusCommand(Command):
             "output_frequency": Decimal(data[4]),
             "battery_voltage": Decimal(data[5]),
             "temperature": Decimal(data[6]),
-        }
+        })

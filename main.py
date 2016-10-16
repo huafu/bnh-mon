@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 
-from lib import Ep3000
+from lib import *
 
 
-status = Ep3000.StatusCommand()
+def main():
+    print StatusCommand().send().payload.battery_voltage
 
-print status.send()
+exiting_app = False
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        exiting_app = True
+        raise
