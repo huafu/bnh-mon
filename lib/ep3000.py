@@ -44,6 +44,8 @@ class Command(object):
             if max_tries and tries > max_tries:
                 print 'Last try (#%s) result: %s'%(tries, res)
                 raise TooManyTriesException()
+            elif tries > 1 and divmod(tries, 10)[1] == 0:
+                print 'Last try (#%s) result: %s' % (tries, res)
 
             tries += 1
             try:
