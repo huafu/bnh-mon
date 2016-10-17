@@ -28,12 +28,11 @@ TMP_PATH = BASE_PATH + '/tmp'
 
 EP3000_DATA_NAMES = (
     {'name': 'input_voltage', 'unit': 'V', 'label': 'Input Voltage', 'color': '#276000', 'group': 'voltages'},
-    {'name': 'input_fault_voltage', 'unit': 'V', 'label': 'Input Fault Voltage', 'color': '#9AFB00',
-     'group': 'voltages'},
+    {'name': 'input_fault_voltage', 'unit': 'V', 'label': 'Input Fault Volt.', 'color': '#9AFB00', 'group': 'voltages'},
     {'name': 'output_voltage', 'unit': 'V', 'label': 'Output Voltage', 'color': '#A20B02', 'group': 'voltages'},
     {'name': 'output_load', 'unit': '%', 'label': 'Load Percent', 'color': '#FB6600', 'group': 'others'},
     {'name': 'output_frequency', 'unit': 'Hz', 'label': 'Output Frequency', 'color': '#D16502', 'group': 'others'},
-    {'name': 'battery_voltage', 'unit': 'V', 'label': 'Battery Voltage', 'color': '#09629E', 'group': 'voltages'},
+    {'name': 'battery_voltage', 'unit': 'V', 'label': 'Battery Voltage', 'color': '#09629E', 'group': 'others'},
     {'name': 'temperature', 'unit': '°C', 'label': 'Temperature', 'color': '#9500FC', 'group': 'others'},
 )
 
@@ -76,15 +75,15 @@ def update_ep3000(payload):
 def generate_graphs(sched = 'hourly', grouped = False):
     import rrdtool
     if sched == 'weekly':
-        period = 'w'
+        period = '1w'
     elif sched == 'daily':
-        period = 'd'
+        period = '1d'
     elif sched == 'monthly':
-        period = 'm'
+        period = '1m'
     elif sched == 'hourly':
-        period = 'h'
+        period = '2h'
     elif sched == 'yearly':
-        period = 'y'
+        period = '1y'
     else:
         raise Exception("Unknown range kind: %s" % (sched))
 
@@ -93,8 +92,7 @@ def generate_graphs(sched = 'hourly', grouped = False):
             file = "%s/ep3000-%s-%s.png" % (TMP_PATH, group, sched)
             args = (
                 file,
-                "--start",
-                "-1%s" % (period),
+                "--start -%s" % (period),
                 "--vertical-label=%s" % (conf['unit']),
                 "-w 400",
             )
@@ -120,8 +118,7 @@ def generate_graphs(sched = 'hourly', grouped = False):
             file = "%s/ep3000-%s-%s.png" % (TMP_PATH, name, sched)
             rrdtool.graph(
                 file,
-                "--start",
-                "-1%s" % (period),
+                "--start -%s" % (period),
                 "--vertical-label=%s" % (ds['unit']),
                 "-w 400",
                 "DEF:val=%s:%s:AVERAGE" % (FILE_EP3000, name),
