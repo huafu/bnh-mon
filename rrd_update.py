@@ -12,10 +12,10 @@ def main():
         msg = status.send(max_tries = 0)
         rrd.update_ep3000(st_payload = msg['payload'])
 
-        msg = rating.send(max_tries = 0)
-        rrd.update_ep3000(ups_payload = msg['payload'])
+        #msg = rating.send(max_tries = 0)
+        #rrd.update_ep3000(ups_payload = msg['payload'])
 
-        time.sleep(.1)
+        time.sleep(.5)
 
 
 exiting_app = False
