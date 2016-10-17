@@ -2,9 +2,13 @@
 
 import re
 import time
+import json
 import serial
 from decimal import *
 from common import ObjectDict
+from lib import BASE_PATH
+
+LATESTS_RESULTS_PATH = BASE_PATH + '/tmp/latests'
 
 _serial = serial.Serial(
     port = '/dev/ttyUSB0',
@@ -42,7 +46,7 @@ class Command(object):
         res = None
         while True:
             if max_tries and tries > max_tries:
-                print 'Last try (#%s) result: %s'%(tries, res)
+                print 'Last try (#%s) result: %s' % (tries, res)
                 raise TooManyTriesException()
             elif tries > 1 and divmod(tries, 10)[1] == 0:
                 print 'Last try (#%s) result: %s' % (tries, res)
@@ -60,6 +64,11 @@ class Command(object):
             "tries": tries,
             "payload": self.parse_result(res),
         })
+
+        json.dump(
+            self.last_result,
+            LATESTS_RESULTS_PATH + '/' + self.code.lower() + '.json'
+        )
 
         return self.last_result
 
