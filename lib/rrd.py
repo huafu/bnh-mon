@@ -61,13 +61,13 @@ EP3000_GROUPS = {
 
 def update_ep3000(payload):
     values = 'N:%s:%s:%s:%s:%s:%s:%s' % (
-        payload.input_voltage,
-        payload.input_fault_voltage,
-        payload.output_voltage,
-        payload.output_load,
-        payload.output_frequency,
-        payload.battery_voltage,
-        payload.temperature,
+        payload['input_voltage'],
+        payload['input_fault_voltage'],
+        payload['output_voltage'],
+        payload['output_load'],
+        payload['output_frequency'],
+        payload['battery_voltage'],
+        payload['temperature'],
     )
     rrdtool.update(FILE_EP3000, values)
 
@@ -92,7 +92,7 @@ def generate_graphs(sched = 'hourly', grouped = False):
             file = "%s/ep3000-%s-%s.png" % (TMP_PATH, group, sched)
             args = (
                 file,
-                "--start -%s" % (period),
+                "--start", " -%s" % (period),
                 "--vertical-label=%s" % (conf['unit']),
                 "-w 400",
             )
@@ -118,7 +118,7 @@ def generate_graphs(sched = 'hourly', grouped = False):
             file = "%s/ep3000-%s-%s.png" % (TMP_PATH, name, sched)
             rrdtool.graph(
                 file,
-                "--start -%s" % (period),
+                "--start", "-%s" % (period),
                 "--vertical-label=%s" % (ds['unit']),
                 "-w 400",
                 "DEF:val=%s:%s:AVERAGE" % (FILE_EP3000, name),

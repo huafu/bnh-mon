@@ -38,3 +38,7 @@ def set_interval(func, sec):
     t = threading.Thread(target = thread)
     t.start()
     return t
+
+
+def log(message, kind = 'debug'):
+    print "[%s][%s] %s"%(time.strftime('%Y-%m-%d %H:%M:%S'), kind, message)

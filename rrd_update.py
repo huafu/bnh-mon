@@ -1,21 +1,19 @@
 #!/usr/bin/env python
-
+import json
 import time
 from lib import *
 
+
 def main():
     status = ep3000.StatusCommand()
+    rating = ep3000.UpsRatingCommand()
 
     while not exiting_app:
         msg = status.send(max_tries = 0)
-        payload = msg.payload
+        payload = msg['payload']
         rrd.update_ep3000(payload)
-        print 'logged to rrd (%s tries) - load: %d%% - batt: %dV' % (
-            msg.tries,
-            payload.output_load,
-            payload.battery_voltage
-        )
-        time.sleep(1)
+        rating.send()
+        time.sleep(.5)
 
 
 exiting_app = False
