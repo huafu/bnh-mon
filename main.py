@@ -2,12 +2,13 @@
 
 import rrdtool
 from lib import *
+from lib.rrd import create_ep3k_ups
 
 
 def main():
-    print ep3000.StatusCommand().send()['payload']
-    print ep3000.UpsRatingCommand().send()['payload']
-    # print rrd.create_ep3000()
+    #print ep3000.StatusCommand().send()['payload']
+    #print ep3000.UpsRatingCommand().send()['payload']
+    print create_ep3k_ups()
     # rrd.generate_graphs()
     # rrdtool.fetch(
     #    rrd.FILE_EP3000,

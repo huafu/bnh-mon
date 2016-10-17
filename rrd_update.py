@@ -10,10 +10,12 @@ def main():
 
     while not exiting_app:
         msg = status.send(max_tries = 0)
-        payload = msg['payload']
-        rrd.update_ep3000(payload)
-        rating.send()
-        time.sleep(.5)
+        rrd.update_ep3000(st_payload = msg['payload'])
+
+        msg = rating.send(max_tries = 0)
+        rrd.update_ep3000(ups_payload = msg['payload'])
+
+        time.sleep(.1)
 
 
 exiting_app = False
