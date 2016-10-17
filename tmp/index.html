@@ -73,5 +73,18 @@
     <hr>
 
 </center>
+<script type="text/javascript">
+    var img, i, images = document.getElementsByTagName('img');
+    for (i = 0; i < images.length; i++) {
+        img = images[i];
+        img.origSrc = img.src;
+    }
+    setInterval(function () {
+        for (i = 0; i < images.length; i++) {
+            img = images[i];
+            img.src = img.origSrc + '?t=' + Date.now();
+        }
+    }, 10000);
+</script>
 </body>
 </html>
