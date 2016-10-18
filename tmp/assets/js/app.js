@@ -243,20 +243,36 @@ $(document).ready(function () {
         },
 
         summary: function (json) {
-            var totals, $s = $items.summary, on_batt;
+            var totals, $s = $items.summary, on_batt,
+                now = Date.now(),
+                start_of_day = moment().startOf('day').valueOf();
             status(statuses.power_down, json.payload.input_voltage == 0, to_js_timestamp(json.timestamp));
             status(statuses.on_battery, on_batt = (json.payload.output_load > 0), to_js_timestamp(json.timestamp));
             totals = {
-                today: status_totals(statuses.on_battery, moment().startOf('day').valueOf()),
+                today: status_totals(statuses.on_battery, start_of_day),
                 all: status_totals(statuses.on_battery)
             };
             $s.find('.on_grid_since').text(on_batt ? '-' : moment(statuses.on_battery.since).fromNow());
             $s.find('.on_batt_since').text(on_batt ? moment(statuses.on_battery.since).fromNow(true) : '-');
-            $s.find('.total_grid_today').text(totals.today.off.format('H:m:s'));
-            $s.find('.total_batt_today').text(totals.today.on.format('H:m:s'));
+
+            $s.find('.total_grid_today').text(
+                totals.today.off.format('d [days] H:m:s') +
+                ' (' + percentize(totals.today.off, 0, now - start_of_day) + ' %)'
+            );
+            $s.find('.total_batt_today').text(
+                totals.today.on.format('d [days] H:m:s') +
+                ' (' + percentize(totals.today.on, 0, now - start_of_day) + ' %)'
+            );
+
             $s.find('.since').text(moment(START).fromNow(true));
-            $s.find('.total_grid').text(totals.all.off.format('d [days] H:m:s'));
-            $s.find('.total_batt').text(totals.all.on.format('d [days] H:m:s'));
+            $s.find('.total_grid').text(
+                totals.all.off.format('d [days] H:m:s') +
+                ' (' + percentize(totals.all.off, 0, now - START) + ' %)'
+            );
+            $s.find('.total_batt').text(
+                totals.all.on.format('d [days] H:m:s') +
+                ' (' + percentize(totals.all.on, 0, now - START) + ' %)'
+            );
             $s.find('.batt').tbsTypeClass(on_batt ? 'info' : null, 'bg');
             $s.find('.grid').tbsTypeClass(on_batt ? null : 'info', 'bg');
         },
