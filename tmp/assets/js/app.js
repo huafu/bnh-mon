@@ -300,7 +300,7 @@ $(document).ready(function () {
             $items.in_out.tbsTypeClass(in_volts == 0 ? 'danger' : 'default', 'panel');
             $items.in_out.find('.badge.input .text').text(in_volts + ' V');
             $items.in_out.find('.badge.output .text').text(out_volts + ' V');
-            graph('in_out', json.timestamp, {in: in_volts, out: out_volts}, null, {
+            graph('in_out', json.timestamp, {out: out_volts, in: in_volts}, null, {
                 yaxis: {
                     axisLabel: "Volts",
                     tickDecimals: 1,
