@@ -78,21 +78,23 @@ $(document).ready(function () {
     };
 
     window.bnh.main = main = function () {
-        $.getJSON('/latests/ep3000-status.json?t=' + Date.now()).then(function (json) {
-            if (!START)START = Date.now();
-            for (var k in refresh) {
-                try {
-                    refresh[k](json);
-                } catch (e) {
-                    console.log(e);
-                    setTimeout(function () {
-                        throw e;
-                    }, 1);
+        $.getJSON('/latests/ep3000-status.json?t=' + Date.now())
+            .then(function (json) {
+                if (!START)START = Date.now();
+                for (var k in refresh) {
+                    try {
+                        refresh[k](json);
+                    } catch (e) {
+                        console.log(e);
+                        setTimeout(function () {
+                            throw e;
+                        }, 1);
+                    }
                 }
-            }
-
-            setTimeout(main, 1000);
-        });
+            })
+            .always(function () {
+                setTimeout(main, 1000);
+            });
     };
 
     function to_js_timestamp(unix) {
