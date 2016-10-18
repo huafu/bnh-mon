@@ -37,8 +37,8 @@ $(document).ready(function () {
     };
 
     graph_series = {
-        in: {data: []},
-        out: {data: []},
+        in: {data: [], lines: {fill: false}},
+        out: {data: [], lines: {fill: false}},
         batt: {data: []},
         load: {data: []}
     };
@@ -304,7 +304,7 @@ $(document).ready(function () {
                 yaxis: {
                     axisLabel: "Volts",
                     tickDecimals: 1,
-                    min: 190
+                    min: 195
                 }
             });
         },
