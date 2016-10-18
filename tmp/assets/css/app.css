@@ -18,8 +18,18 @@ body {
     font-weight: bold;
 }
 
+/*
 #summary .panel-body {
     font-size: .84em;
+}
+*/
+
+.panel-body, .pannel-heading {
+    padding: 10px;
+}
+
+.progress {
+    margin-bottom: 10px;
 }
 
 hr {

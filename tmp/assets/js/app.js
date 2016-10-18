@@ -1,3 +1,5 @@
+window.bnh = {};
+
 $(document).ready(function () {
     var BATT_MAX, BATT_MIN, BATT_ICONS, GRAPH_RANGE, START,
         colors, main, progress, refresh, $items, graph_series, alarms, statuses;
@@ -8,7 +10,7 @@ $(document).ready(function () {
         'battery-empty', 'battery-quarter', 'battery-half', 'battery-three-quarters', 'battery-full'
     ];
 
-    $items = {
+    window.bnh.$items = $items = {
         in_out: $('#in_out'),
         batt: $('#battery'),
         load: $('#load'),
@@ -18,7 +20,7 @@ $(document).ready(function () {
         summary: $('#summary')
     };
 
-    alarms = {
+    window.bnh.alarms = alarms = {
         low_batt: {
             delay: 10 * 1000,
             timer: null,
@@ -31,26 +33,26 @@ $(document).ready(function () {
         }
     };
 
-    statuses = {
+    window.bnh.statuses = statuses = {
         on_battery: {ranges: [], last: undefined},
         power_down: {ranges: [], last: undefined}
     };
 
-    graph_series = {
+    window.bnh.graph_series = graph_series = {
         in: {data: [], lines: {fill: false}},
         out: {data: [], lines: {fill: false}},
         batt: {data: []},
         load: {data: []}
     };
 
-    colors = {
+    window.bnh.colors = colors = {
         in: '#276000',
         out: '#A20B02',
         load: '#FB6600',
         batt: '#09629E'
     };
 
-    progress = function (elem, val, label, type) {
+    window.bnh.progress = progress = function (elem, val, label, type) {
         if (label == null) {
             label = val + '%';
         }
@@ -75,7 +77,7 @@ $(document).ready(function () {
         return $this;
     };
 
-    main = function () {
+    window.bnh.main = main = function () {
         $.getJSON('/latests/ep3000-status.json?t=' + Date.now()).then(function (json) {
             if (!START)START = Date.now();
             for (var k in refresh) {
@@ -176,12 +178,13 @@ $(document).ready(function () {
 
 
     function graph(graph_name, unix_ts, values, range, options) {
-        var opt, new_item, series, i, s, v, delete_count,
+        var opt, new_item, series, i, j, s, v, delete_count, ymin, ymax,
             $graph = $items[graph_name].find('.graph'),
             start = moment(),
             //last_update = $graph.data('lastUpdate'),
             now = Date.now(),
             plot = $graph.data('plotObject'),
+            autoMinMax = $graph.data('autoMinMax'),
             series_names = Object.keys(values);
 
         if (!range) range = GRAPH_RANGE;
@@ -207,6 +210,19 @@ $(document).ready(function () {
                 delete_count++;
             }
             s.data.splice(0, delete_count);
+            if (autoMinMax) {
+                for (j in s.data) {
+                    v = s.data[j][1];
+                    if (v === undefined) continue;
+                    ymin = ymin ? Math.min(ymin, v) : v;
+                    ymax = ymax ? Math.max(ymax, v) : v;
+                }
+            }
+        }
+        if (ymin !== undefined) {
+            v = (ymax - ymin) / 20;
+            ymin -= v;
+            ymax += v;
         }
 
         if (!plot) {
@@ -220,6 +236,10 @@ $(document).ready(function () {
                             timezone: "browser",
                             min: start,
                             max: Date.now()
+                        },
+                        yaxis: {
+                            min: ymin,
+                            max: ymax
                         }
                     }, options || {}
                 )
@@ -229,6 +249,11 @@ $(document).ready(function () {
             opt = plot.getAxes().xaxis.options;
             opt.min = start;
             opt.max = now;
+            if (ymin !== undefined) {
+                opt = plot.getAxes().yaxis.options;
+                opt.min = ymin;
+                opt.max = ymax;
+            }
             plot.setupGrid();
         }
 
@@ -237,7 +262,7 @@ $(document).ready(function () {
         $graph.data('lastUpdate', Date.now());
     }
 
-    refresh = {
+    window.bnh.refresh = refresh = {
         time: function (json) {
             $items.time.text(moment().format('llll'));
         },
@@ -252,26 +277,26 @@ $(document).ready(function () {
                 today: status_totals(statuses.on_battery, start_of_day),
                 all: status_totals(statuses.on_battery)
             };
-            $s.find('.on_grid_since').text(on_batt ? '-' : moment(statuses.on_battery.since).fromNow());
+            $s.find('.on_grid_since').text(on_batt ? '-' : moment(statuses.on_battery.since).fromNow(true));
             $s.find('.on_batt_since').text(on_batt ? moment(statuses.on_battery.since).fromNow(true) : '-');
 
-            $s.find('.total_grid_today').text(
+            $s.find('.total_grid_today').html(
                 totals.today.off.format('d [days] H:m:s') +
-                ' (' + percentize(totals.today.off, 0, now - start_of_day) + ' %)'
+                ' (<code>' + percentize(totals.today.off, 0, now - start_of_day) + '%</code>)'
             );
-            $s.find('.total_batt_today').text(
+            $s.find('.total_batt_today').html(
                 totals.today.on.format('d [days] H:m:s') +
-                ' (' + percentize(totals.today.on, 0, now - start_of_day) + ' %)'
+                ' (<code>' + percentize(totals.today.on, 0, now - start_of_day) + '%</code>)'
             );
 
             $s.find('.since').text(moment(START).fromNow(true));
-            $s.find('.total_grid').text(
+            $s.find('.total_grid').html(
                 totals.all.off.format('d [days] H:m:s') +
-                ' (' + percentize(totals.all.off, 0, now - START) + ' %)'
+                ' (<code>' + percentize(totals.all.off, 0, now - START) + '%</code>)'
             );
-            $s.find('.total_batt').text(
+            $s.find('.total_batt').html(
                 totals.all.on.format('d [days] H:m:s') +
-                ' (' + percentize(totals.all.on, 0, now - START) + ' %)'
+                ' (<code>' + percentize(totals.all.on, 0, now - START) + '%</code>)'
             );
             $s.find('.batt').tbsTypeClass(on_batt ? 'info' : null, 'bg');
             $s.find('.grid').tbsTypeClass(on_batt ? null : 'info', 'bg');
@@ -316,6 +341,8 @@ $(document).ready(function () {
             $items.in_out.tbsTypeClass(in_volts == 0 ? 'danger' : 'default', 'panel');
             $items.in_out.find('.badge.input .text').text(in_volts + ' V');
             $items.in_out.find('.badge.output .text').text(out_volts + ' V');
+            $items.in_out.find('.badge.input').css('background-color', colors.in);
+            $items.in_out.find('.badge.output').css('background-color', colors.out);
             graph('in_out', json.timestamp, {out: out_volts, in: in_volts}, null, {
                 yaxis: {
                     axisLabel: "Volts",
