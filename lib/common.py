@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-import threading
 import time
-
-from main import exiting_app
 
 
 class ObjectDict(dict):
@@ -23,22 +20,5 @@ class ObjectDict(dict):
             raise AttributeError("No such attribute: " + name)
 
 
-def set_interval(func, sec):
-    def thread():
-        start = time.time()
-        next = start + sec
-        while not exiting_app:
-            func()
-            now = time.time()
-            if now >= next:
-                next = now + (int((now - start) / sec) + 1) * sec
-            else:
-                time.sleep(next - now)
-
-    t = threading.Thread(target = thread)
-    t.start()
-    return t
-
-
 def log(message, kind = 'debug'):
-    print "[%s][%s] %s"%(time.strftime('%Y-%m-%d %H:%M:%S'), kind, message)
+    print "[%s][%s] %s" % (time.strftime('%Y-%m-%d %H:%M:%S'), kind, message)

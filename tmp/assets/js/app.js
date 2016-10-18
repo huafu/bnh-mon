@@ -1,11 +1,12 @@
 window.bnh = {};
 
 $(document).ready(function () {
-    var BATT_MAX, BATT_MIN, BATT_ICONS, GRAPH_RANGE, START,
+    var BATT_MAX, BATT_MIN, BATT_ICONS, GRAPH_RANGE, START, BACKGROUND_UPDATE,
         colors, main, progress, refresh, $items, graph_series, alarms, statuses;
     BATT_MIN = 40;
     BATT_MAX = 54;
     GRAPH_RANGE = [30, 'minute'];
+    BACKGROUND_UPDATE = false;
     BATT_ICONS = [
         'battery-empty', 'battery-quarter', 'battery-half', 'battery-three-quarters', 'battery-full'
     ];
@@ -53,6 +54,7 @@ $(document).ready(function () {
     };
 
     window.bnh.progress = progress = function (elem, val, label, type) {
+        if (BACKGROUND_UPDATE) return;
         if (label == null) {
             label = val + '%';
         }
@@ -68,6 +70,7 @@ $(document).ready(function () {
     }
 
     $.fn.tbsTypeClass = function (type, prefix) {
+        if (BACKGROUND_UPDATE) return $(this);
         var $this = $(this), i, t, types = ['default', 'success', 'info', 'warning', 'danger'];
         prefix = prefix ? prefix + '-' : '';
         for (i in types) {
@@ -77,21 +80,35 @@ $(document).ready(function () {
         return $this;
     };
 
+    function refresh_all(json) {
+        if ($.isArray(json)) {
+            BACKGROUND_UPDATE = true;
+            for (var i = 0; i < json.length - 1; i++) {
+                refresh_all(json[i]);
+            }
+            BACKGROUND_UPDATE = false;
+            refresh_all(json[json.length - 1]);
+        } else {
+            for (var k in refresh) {
+                refresh[k](json);
+            }
+        }
+        return json;
+    }
+
     window.bnh.main = main = function () {
-        $.getJSON('/latests/ep3000-status.json?t=' + Date.now())
-            .then(function (json) {
-                if (!START)START = Date.now();
-                for (var k in refresh) {
-                    try {
-                        refresh[k](json);
-                    } catch (e) {
-                        console.log(e);
-                        setTimeout(function () {
-                            throw e;
-                        }, 1);
-                    }
-                }
-            })
+        var promise;
+        if (START) {
+            promise = $.getJSON('/latests/ep3000-status.json?t=' + Date.now());
+        } else {
+            promise = $.getJSON('/api/week.py?t=' + Date.now())
+                .then(function (json) {
+                    START = to_js_timestamp(json[0].timestamp);
+                    return json;
+                });
+        }
+        promise
+            .then(refresh_all)
             .always(function () {
                 setTimeout(main, 1000);
             });
@@ -139,7 +156,7 @@ $(document).ready(function () {
             obj.since = now
         } else if (obj.last !== status) {
             obj.last = status;
-            obj.ranges.push([obj.since, now - obj.since, !status]);
+            obj.ranges.push([obj.since, now - obj.since - 1, !status]);
             obj.since = now;
         }
     }
@@ -180,21 +197,23 @@ $(document).ready(function () {
 
 
     function graph(graph_name, unix_ts, values, range, options) {
-        var opt, new_item, series, i, j, s, v, delete_count, ymin, ymax,
-            $graph = $items[graph_name].find('.graph'),
+        var opt, new_item, series, i, j, s, v, delete_count, ymin, ymax, $graph, plot, autoMinMax,
             start = moment(),
             //last_update = $graph.data('lastUpdate'),
             now = Date.now(),
-            plot = $graph.data('plotObject'),
-            autoMinMax = $graph.data('autoMinMax'),
             series_names = Object.keys(values);
 
         if (!range) range = GRAPH_RANGE;
         start = start.subtract.apply(start, range).valueOf();
+        if (BACKGROUND_UPDATE && to_js_timestamp(unix_ts) < start - 60 * 1000) return;
+
+        $graph = $items[graph_name].find('.graph');
+        plot = $graph.data('plotObject');
+        autoMinMax = $graph.data('autoMinMax');
 
         series = [];
         for (i in series_names) {
-            if (!plot) {
+            if (!plot && !BACKGROUND_UPDATE) {
                 graph_series[series_names[i]] = $.extend(
                     true,
                     {color: colors[series_names[i]], lines: {fill: true}},
@@ -207,74 +226,82 @@ $(document).ready(function () {
             if (!s.data.length || s.data[s.data.length - 1][0] !== new_item[0]) {
                 s.data.push(new_item);
             }
-            delete_count = 0;
-            while (s.data[delete_count][0] < start - 60 * 1000 && delete_count + 1 < s.data.length) {
-                delete_count++;
-            }
-            s.data.splice(0, delete_count);
-            if (autoMinMax) {
-                for (j in s.data) {
-                    v = s.data[j][1];
-                    if (v === undefined) continue;
-                    ymin = ymin ? Math.min(ymin, v) : v;
-                    ymax = ymax ? Math.max(ymax, v) : v;
+            if (!BACKGROUND_UPDATE) {
+                delete_count = 0;
+                while (s.data[delete_count][0] < start - 60 * 1000 && delete_count + 1 < s.data.length) {
+                    delete_count++;
+                }
+                s.data.splice(0, delete_count);
+                if (autoMinMax) {
+                    for (j in s.data) {
+                        v = s.data[j][1];
+                        if (v == null) continue;
+                        ymin = ymin ? Math.min(ymin, v) : v;
+                        ymax = ymax ? Math.max(ymax, v) : v;
+                    }
                 }
             }
         }
         if (ymin !== undefined) {
-            v = (ymax - ymin) / 20;
+            v = (ymax - ymin) / 10;
             ymin -= v;
             ymax += v;
         }
 
-        if (!plot) {
-            plot = $.plot(
-                $graph,
-                series,
-                $.extend(
-                    true, {
-                        xaxis: {
-                            mode: "time",
-                            timezone: "browser",
-                            min: start,
-                            max: Date.now()
-                        },
-                        yaxis: {
-                            min: ymin,
-                            max: ymax
-                        }
-                    }, options || {}
-                )
-            );
-            $graph.data('plotObject', plot);
-        } else {
-            opt = plot.getAxes().xaxis.options;
-            opt.min = start;
-            opt.max = now;
-            if (ymin !== undefined) {
-                opt = plot.getAxes().yaxis.options;
-                opt.min = ymin;
-                opt.max = ymax;
+        if (!BACKGROUND_UPDATE) {
+            if (!plot) {
+                plot = $.plot(
+                    $graph,
+                    series,
+                    $.extend(
+                        true, {
+                            xaxis: {
+                                mode: "time",
+                                timezone: "browser",
+                                min: start,
+                                max: Date.now()
+                            },
+                            yaxis: {
+                                min: ymin,
+                                max: ymax
+                            }
+                        }, options || {}
+                    )
+                );
+                $graph.data('plotObject', plot);
+            } else {
+                opt = plot.getAxes().xaxis.options;
+                opt.min = start;
+                opt.max = now;
+                if (ymin !== undefined) {
+                    opt = plot.getAxes().yaxis.options;
+                    opt.min = ymin;
+                    opt.max = ymax;
+                }
+                plot.setupGrid();
             }
-            plot.setupGrid();
-        }
 
-        plot.setData(series);
-        plot.draw();
-        $graph.data('lastUpdate', Date.now());
+            plot.setData(series);
+            plot.draw();
+            $graph.data('lastUpdate', Date.now());
+        }
     }
 
     window.bnh.refresh = refresh = {
         time: function (json) {
+            if (BACKGROUND_UPDATE) return;
             $items.time.text(moment().format('llll'));
         },
 
         summary: function (json) {
-            var totals, $s = $items.summary, on_batt,
-                now = Date.now(),
-                start_of_day = moment().startOf('day').valueOf();
+            var totals, $s = $items.summary, on_batt, start_of_day,
+                now = Date.now();
             status(statuses.power_down, json.payload.input_voltage == 0, to_js_timestamp(json.timestamp));
             status(statuses.on_battery, on_batt = (json.payload.output_load > 0), to_js_timestamp(json.timestamp));
+
+            if (BACKGROUND_UPDATE) return;
+
+            start_of_day = moment().startOf('day').valueOf();
             totals = {
                 today: status_totals(statuses.on_battery, start_of_day),
                 all: status_totals(statuses.on_battery)
@@ -307,18 +334,19 @@ $(document).ready(function () {
         battery: function (json) {
             var batt, batt_percent, on_solar;
             batt = json.payload.battery_voltage;
-            batt_percent = percentize(batt, BATT_MIN, BATT_MAX);
-            on_solar = json.payload.output_load > 0;
-            progress($items.batt.find('.progress'), batt_percent, null, batt_type(batt_percent));
-            $items.batt.find('.badge').text(batt + ' V');
-            $items.batt.tbsTypeClass(on_solar ? 'success' : 'warning', 'panel');
-            $items.batt.find('.title').text('Battery (' + (on_solar ? 'off grid' : 'on grid') + ')');
+            if (!BACKGROUND_UPDATE) {
+                batt_percent = percentize(batt, BATT_MIN, BATT_MAX);
+                on_solar = json.payload.output_load > 0;
+                progress($items.batt.find('.progress'), batt_percent, null, batt_type(batt_percent));
+                $items.batt.find('.badge').text(batt + ' V');
+                $items.batt.tbsTypeClass(on_solar ? 'success' : 'warning', 'panel');
+                $items.batt.find('.title').text('Battery (' + (on_solar ? 'off grid' : 'on grid') + ')');
+            }
 
             graph('batt', json.timestamp, {batt: batt}, null, {
                 yaxis: {
                     axisLabel: "Volts",
-                    tickDecimals: 1,
-                    min: BATT_MIN - 4
+                    tickDecimals: 1
                 }
             });
         },
@@ -326,8 +354,10 @@ $(document).ready(function () {
         load: function (json) {
             var load_percent = json.payload.output_load, load;
             load = load_percent * 6 / 100;
-            progress($items.load.find('.progress'), load_percent, null, load_type(load_percent));
-            $items.load.find('.badge').text(load_percent === 0 ? 'grid' : (load + ' kW'));
+            if (!BACKGROUND_UPDATE) {
+                progress($items.load.find('.progress'), load_percent, null, load_type(load_percent));
+                $items.load.find('.badge').text(load_percent === 0 ? 'grid' : (load + ' kW'));
+            }
 
             graph('load', json.timestamp, {load: load}, null, {
                 yaxis: {
@@ -340,21 +370,24 @@ $(document).ready(function () {
         in_out: function (json) {
             var in_volts = json.payload.input_voltage,
                 out_volts = json.payload.output_voltage;
-            $items.in_out.tbsTypeClass(in_volts == 0 ? 'danger' : 'default', 'panel');
-            $items.in_out.find('.badge.input .text').text(in_volts + ' V');
-            $items.in_out.find('.badge.output .text').text(out_volts + ' V');
-            $items.in_out.find('.badge.input').css('background-color', colors.in);
-            $items.in_out.find('.badge.output').css('background-color', colors.out);
+            if (!BACKGROUND_UPDATE) {
+                $items.in_out.tbsTypeClass(in_volts == 0 ? 'danger' : 'default', 'panel');
+                $items.in_out.find('.badge.input .text').text(in_volts + ' V');
+                $items.in_out.find('.badge.output .text').text(out_volts + ' V');
+                $items.in_out.find('.badge.input').css('background-color', colors.in);
+                $items.in_out.find('.badge.output').css('background-color', colors.out);
+            }
+
             graph('in_out', json.timestamp, {out: out_volts, in: in_volts}, null, {
                 yaxis: {
                     axisLabel: "Volts",
-                    tickDecimals: 1,
-                    min: 195
+                    tickDecimals: 1
                 }
             });
         },
 
         statuses: function (json) {
+            if (BACKGROUND_UPDATE) return;
             var batt_percent = percentize(json.payload.battery_voltage, BATT_MIN, BATT_MAX),
                 power_down = json.payload.input_voltage == 0;
             $items.batt_status.find('i.fa')

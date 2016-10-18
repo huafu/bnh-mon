@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # coding=utf-8
-
+import json
 import os
+import time
 import rrdtool
 from constants import BASE_PATH
-
 
 FILE_EP3K_STATUS = BASE_PATH + '/rrd/ep3000.rrd'
 FILE_EP3K_UPS = BASE_PATH + '/rrd/ep3000-ups.rrd'
@@ -130,12 +130,36 @@ def generate_graphs(sched = 'hourly', grouped = False):
             rrdtool.graph(
                 file,
                 "--start", "-%s" % (period),
-                "--vertical-label=%s" % (ds['unit']),
+                           "--vertical-label=%s" % (ds['unit']),
                 "-w 400",
-                "DEF:val=%s:%s:AVERAGE" % (FILE_EP3K_STATUS, name),
-                "LINE1:val%s:%s" % (ds['color'], ds['label']),
+                           "DEF:val=%s:%s:AVERAGE" % (FILE_EP3K_STATUS, name),
+                           "LINE1:val%s:%s" % (ds['color'], ds['label']),
                 "GPRINT:val:MIN:Min\\: %4.0lf ",
                 "GPRINT:val:MAX:Max\\: %4.0lf ",
                 "GPRINT:val:AVERAGE:Avg\\: %4.0lf "
             )
             print "Generated %s graph for %s in %s" % (sched, name, file)
+
+
+def rrd_to_json(start = None, end = int(time.time()), file = None):
+    (timeInfo, columns, rows) = rrdtool.fetch(
+        FILE_EP3K_STATUS, 'AVERAGE', '-r', '1s', '-s', '-1w'
+    )
+    rows.pop()  # remove the last datapoint because RRD sometimes gives funky values
+    data = {}
+    for i, datasource in enumerate(columns):
+        values = [row[i] for row in rows]
+        if 'timestamps' not in data:
+            data['timestamps'] = list(range(*timeInfo))
+        data[datasource] = values
+    res = []
+    found_start = False
+    data['timestamps'].pop()
+    for i, ts in enumerate(data['timestamps']):
+        if not found_start and not data['output_voltage'][i]: continue
+        found_start = True
+        item = {'timestamp': ts, 'payload': {}}
+        for col in columns:
+            item['payload'][col] = None if data[col][i] is None else round(data[col][i], 1)
+        res.append(item)
+    return json.dumps(res)

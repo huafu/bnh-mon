@@ -9,20 +9,11 @@ from lib import BASE_PATH
 
 LATESTS_RESULTS_PATH = BASE_PATH + '/tmp/latests'
 
-_serial = serial.Serial(
-    port = '/dev/ttyUSB0',
-    baudrate = 2400,
-    parity = serial.PARITY_NONE,
-    stopbits = serial.STOPBITS_ONE,
-    bytesize = serial.EIGHTBITS,
-    timeout = 1
-)
 
-
-def send(command):
-    _serial.write('{0:s}\r'.format(command))
-    _serial.flush()
-    return _serial.readline()
+def send(serial, command):
+    serial.write('{0:s}\r'.format(command))
+    serial.flush()
+    return serial.readline()
 
 
 class TooManyTriesException(Exception):
@@ -30,6 +21,22 @@ class TooManyTriesException(Exception):
 
 
 class Command(object):
+
+    _serial = None
+
+    @staticmethod
+    def serial():
+        if not Command._serial:
+            Command._serial = serial.Serial(
+                port = '/dev/ttyUSB0',
+                baudrate = 2400,
+                parity = serial.PARITY_NONE,
+                stopbits = serial.STOPBITS_ONE,
+                bytesize = serial.EIGHTBITS,
+                timeout = 1
+            )
+        return Command._serial
+
     def __init__(self, code, pretty_name = None):
         self.code = code
         self.last_result = None
@@ -57,7 +64,7 @@ class Command(object):
 
             tries += 1
             try:
-                res = send(self.code)
+                res = send(Command.serial(), self.code)
             except serial.SerialException:
                 continue
 
@@ -74,7 +81,7 @@ class Command(object):
             "payload": parsed_results,
         }
 
-        log('Got %s (%s) command response: %s'%(
+        log('Got %s (%s) command response: %s' % (
             self.pretty_name, self.code, json.dumps(self.last_result)
         ))
 
