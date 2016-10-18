@@ -13,3 +13,7 @@ body {
 .graph {
     height: 12.45vw;
 }
+
+.text-bold {
+    font-weight: bold;
+}
