@@ -18,8 +18,15 @@ $(document).ready(function () {
         batt_status: $('#batt_status'),
         grid_status: $('#grid_status'),
         time: $('#time'),
-        summary: $('#summary')
+        summary: $('#summary'),
+        history_length: $('#history_length')
     };
+
+    $items.history_length.find('ul.dropdown-menu').on('click', 'a[data-history-length]', function (event) {
+        GRAPH_RANGE = $(this).data('historyLength');
+        $items.history_length.find('ul.dropdown-menu > li').removeClass('bg-info');
+        $(this).closest('li').addClass('bg-info');
+    });
 
     window.bnh.alarms = alarms = {
         low_batt: {
@@ -162,14 +169,19 @@ $(document).ready(function () {
     }
 
     function status_totals(obj, since) {
-        var totals = {on: 0, off: 0}, i, r;
+        var totals = {on: 0, off: 0}, i, r, delta;
         if (!since) since = 0;
         for (i in obj.ranges) {
+            delta = 0;
             r = obj.ranges[i];
-            if (r[0] < since) continue;
-            totals[r[2] ? 'on' : 'off'] += r[1];
+            if (r[0] < since) {
+                if (r[0] + r[1] > since) delta = r[0] + r[1] - since
+            } else {
+                delta = r[1];
+            }
+            totals[r[2] ? 'on' : 'off'] += delta;
         }
-        totals[obj.last ? 'on' : 'off'] += Math.max(since, Date.now()) - obj.since;
+        totals[obj.last ? 'on' : 'off'] += (Math.max(since, Date.now()) - obj.since);
         totals.on = moment.duration(totals.on);
         totals.off = moment.duration(totals.off);
         return totals;
@@ -205,7 +217,6 @@ $(document).ready(function () {
 
         if (!range) range = GRAPH_RANGE;
         start = start.subtract.apply(start, range).valueOf();
-        if (BACKGROUND_UPDATE && to_js_timestamp(unix_ts) < start - 60 * 1000) return;
 
         $graph = $items[graph_name].find('.graph');
         plot = $graph.data('plotObject');
@@ -222,20 +233,23 @@ $(document).ready(function () {
             }
             series.push(s = graph_series[series_names[i]]);
             v = values[series_names[i]];
-            new_item = [to_js_timestamp(unix_ts), v === 0 ? undefined : v];
-            if (!s.data.length || s.data[s.data.length - 1][0] !== new_item[0]) {
+            new_item = [to_js_timestamp(unix_ts), v === 0 || v === null ? undefined : v];
+            if (
+                (new_item[1] !== undefined || !options.ignore_null_values)
+                && (!s.data.length || s.data[s.data.length - 1][0] !== new_item[0])
+            ) {
                 s.data.push(new_item);
             }
             if (!BACKGROUND_UPDATE) {
-                delete_count = 0;
-                while (s.data[delete_count][0] < start - 60 * 1000 && delete_count + 1 < s.data.length) {
-                    delete_count++;
-                }
-                s.data.splice(0, delete_count);
+                /*delete_count = 0;
+                 while (s.data[delete_count][0] < start - 60 * 1000 && delete_count + 1 < s.data.length) {
+                 delete_count++;
+                 }
+                 s.data.splice(0, delete_count);*/
                 if (autoMinMax) {
                     for (j in s.data) {
                         v = s.data[j][1];
-                        if (v == null) continue;
+                        if (v == null || s.data[j][0] < start) continue;
                         ymin = ymin ? Math.min(ymin, v) : v;
                         ymax = ymax ? Math.max(ymax, v) : v;
                     }
@@ -243,7 +257,7 @@ $(document).ready(function () {
             }
         }
         if (ymin !== undefined) {
-            v = (ymax - ymin) / 10;
+            v = Math.max(0.1, (ymax - ymin) / 10);
             ymin -= v;
             ymax += v;
         }
@@ -309,24 +323,34 @@ $(document).ready(function () {
             $s.find('.on_grid_since').text(on_batt ? '-' : moment(statuses.on_battery.since).fromNow(true));
             $s.find('.on_batt_since').text(on_batt ? moment(statuses.on_battery.since).fromNow(true) : '-');
 
-            $s.find('.total_grid_today').html(
-                totals.today.off.format('d [days] H:m:s') +
-                ' (<code>' + percentize(totals.today.off, 0, now - start_of_day) + '%</code>)'
+
+            progress(
+                $s.find('.total_grid_today .progress'),
+                percentize(totals.today.off, 0, now - start_of_day),
+                totals.today.off.format('d [days] H:mm:ss'),
+                'warning'
             );
-            $s.find('.total_batt_today').html(
-                totals.today.on.format('d [days] H:m:s') +
-                ' (<code>' + percentize(totals.today.on, 0, now - start_of_day) + '%</code>)'
+            progress(
+                $s.find('.total_batt_today .progress'),
+                percentize(totals.today.on, 0, now - start_of_day),
+                totals.today.on.format('d [days] H:mm:ss'),
+                'success'
             );
 
             $s.find('.since').text(moment(START).fromNow(true));
-            $s.find('.total_grid').html(
-                totals.all.off.format('d [days] H:m:s') +
-                ' (<code>' + percentize(totals.all.off, 0, now - START) + '%</code>)'
+            progress(
+                $s.find('.total_grid .progress'),
+                percentize(totals.all.off, 0, now - START),
+                totals.all.off.format('d [days] H:m:s'),
+                'warning'
             );
-            $s.find('.total_batt').html(
-                totals.all.on.format('d [days] H:m:s') +
-                ' (<code>' + percentize(totals.all.on, 0, now - START) + '%</code>)'
+            progress(
+                $s.find('.total_batt .progress'),
+                percentize(totals.all.on, 0, now - START),
+                totals.all.on.format('d [days] H:m:s'),
+                'success'
             );
+
             $s.find('.batt').tbsTypeClass(on_batt ? 'info' : null, 'bg');
             $s.find('.grid').tbsTypeClass(on_batt ? null : 'info', 'bg');
         },
@@ -347,7 +371,8 @@ $(document).ready(function () {
                 yaxis: {
                     axisLabel: "Volts",
                     tickDecimals: 1
-                }
+                },
+                ignore_null_values: true
             });
         },
 
@@ -382,7 +407,8 @@ $(document).ready(function () {
                 yaxis: {
                     axisLabel: "Volts",
                     tickDecimals: 1
-                }
+                },
+                ignore_null_values: true
             });
         },
 

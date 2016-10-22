@@ -11,18 +11,13 @@ body {
 }
 
 .graph {
-    height: 13.1vw;
+    height: 22vh;
+    min-height: 100px;
 }
 
 .text-bold {
     font-weight: bold;
 }
-
-/*
-#summary .panel-body {
-    font-size: .84em;
-}
-*/
 
 .panel-body, .pannel-heading {
     padding: 10px;
@@ -39,4 +34,8 @@ hr {
 
 dl {
     margin-bottom: 0;
+}
+
+#summary .progress {
+    margin-bottom: 4px;
 }
