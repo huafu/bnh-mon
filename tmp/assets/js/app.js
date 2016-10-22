@@ -194,7 +194,7 @@ $(document).ready(function () {
             }
             totals[r[2] ? 'on' : 'off'] += delta;
         }
-        totals[obj.last ? 'on' : 'off'] += (Math.max(since, Date.now()) - obj.since);
+        totals[obj.last ? 'on' : 'off'] += (Math.max(Date.now(), since) - Math.max(obj.since, since));
         totals.on = moment.duration(totals.on);
         totals.off = moment.duration(totals.off);
         return totals;
