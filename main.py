@@ -6,7 +6,10 @@ from lib.rrd import create_ep3k_ups
 
 
 def main():
-    print ep3000.StatusCommand().send()['payload']
+    im = read()
+    save(im)
+    print bound(im)
+    #print ep3000.StatusCommand().send()['payload']
     #print ep3000.UpsRatingCommand().send()['payload']
     #print create_ep3k_ups()
     # rrd.generate_graphs()
