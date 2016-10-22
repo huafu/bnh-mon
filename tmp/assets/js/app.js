@@ -61,15 +61,28 @@ $(document).ready(function () {
     };
 
     window.bnh.progress = progress = function (elem, val, label, type) {
+        var i, $bars, percent_so_far, lbl;
         if (BACKGROUND_UPDATE) return;
-        if (label == null) {
-            label = val + '%';
+        $bars = $(elem).find('.progress-bar');
+        if ($.isArray(val)) {
+            percent_so_far = 0;
+            for (i in val) {
+                if (val[i] == null) val[i] = 100 - percent_so_far;
+                percent_so_far += val[i];
+                lbl = $.isArray(label) ? label[i] : label;
+                $bars.eq(i)
+                    .attr('aria-valuenow', val[i])
+                    .width(val[i] + '%')
+                    .text(lbl == null ? val[i] + '%' : lbl)
+                    .tbsTypeClass($.isArray(type) ? type[i] : type, 'progress-bar');
+            }
+        } else {
+            $bars
+                .attr('aria-valuenow', val)
+                .width(val + '%')
+                .text(label ? label : (val + ' %'))
+                .tbsTypeClass(type, 'progress-bar');
         }
-        $(elem).find('.progress-bar')
-            .attr('aria-valuenow', val)
-            .width(val + '%')
-            .text(label)
-            .tbsTypeClass(type, 'progress-bar');
     };
 
     function pick_for_percent(array, percent) {
@@ -163,7 +176,7 @@ $(document).ready(function () {
             obj.since = now
         } else if (obj.last !== status) {
             obj.last = status;
-            obj.ranges.push([obj.since, now - obj.since - 1, !status]);
+            obj.ranges.push([obj.since, now - obj.since, !status]);
             obj.since = now;
         }
     }
@@ -320,39 +333,30 @@ $(document).ready(function () {
                 today: status_totals(statuses.on_battery, start_of_day),
                 all: status_totals(statuses.on_battery)
             };
-            $s.find('.on_grid_since').text(on_batt ? '-' : moment(statuses.on_battery.since).fromNow(true));
-            $s.find('.on_batt_since').text(on_batt ? moment(statuses.on_battery.since).fromNow(true) : '-');
+
+            //$s.find('.since_last').text(moment(statuses.on_battery.since).fromNow(true));
+            $s.find('.status_last')
+                .text(
+                    'on ' + (on_batt ? 'solar' : 'grid') + ' since '
+                    + moment.duration(now - statuses.on_battery.since).format()
+                )
+                .tbsTypeClass(on_batt ? 'success' : 'warning', 'text');
 
 
             progress(
-                $s.find('.total_grid_today .progress'),
-                percentize(totals.today.off, 0, now - start_of_day),
-                totals.today.off.format('d [days] H:mm:ss'),
-                'warning'
-            );
-            progress(
-                $s.find('.total_batt_today .progress'),
-                percentize(totals.today.on, 0, now - start_of_day),
-                totals.today.on.format('d [days] H:mm:ss'),
-                'success'
+                $s.find('.status_today .progress'),
+                [percentize(totals.today.on, 0, now - start_of_day), null],
+                [totals.today.on.format('H:mm:ss'), totals.today.off.format('H:mm:ss')],
+                ['success', 'warning']
             );
 
-            $s.find('.since').text(moment(START).fromNow(true));
+            $s.find('.since_all').text(moment(START).fromNow(true));
             progress(
-                $s.find('.total_grid .progress'),
-                percentize(totals.all.off, 0, now - START),
-                totals.all.off.format('d [days] H:m:s'),
-                'warning'
+                $s.find('.status_all .progress'),
+                [percentize(totals.all.on, 0, now - START), null],
+                [totals.all.on.format('H:mm:ss'), totals.all.off.format('H:mm:ss')],
+                ['success', 'warning']
             );
-            progress(
-                $s.find('.total_batt .progress'),
-                percentize(totals.all.on, 0, now - START),
-                totals.all.on.format('d [days] H:m:s'),
-                'success'
-            );
-
-            $s.find('.batt').tbsTypeClass(on_batt ? 'info' : null, 'bg');
-            $s.find('.grid').tbsTypeClass(on_batt ? null : 'info', 'bg');
         },
 
         battery: function (json) {

@@ -127,51 +127,55 @@
                     <span class="title">Summary</span>
                 </div>
                 <div class="panel-body">
-                    <dl class="dl-horizontal grid">
-                        <dt><i class="fa fa-building"></i> on grid since</dt>
-                        <dd class="on_grid_since">-</dd>
-                        <dt>grid use today</dt>
-                        <dd class="total_grid_today">
-                            <div class="progress">
-                                <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="50"
-                                     aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
-                                    50%
+
+                    <table class="table table-condensed">
+                        <thead>
+                        <tr>
+                            <th width="1">since</th>
+                            <th>
+                                <span class="pull-left text-success"><i class="fa fa-recycle"></i> solar</span>
+                                <span class="pull-right text-warning">grid <i class="fa fa-building"></i></span>
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <th class="since_all">all</th>
+                            <td class="status_all">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" aria-valuenow="50"
+                                         aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
+                                        50%
+                                    </div>
+                                    <div class="progress-bar" role="progressbar" aria-valuenow="50"
+                                         aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
+                                        50%
+                                    </div>
                                 </div>
-                            </div>
-                        </dd>
-                        <dt>...since <span class="since">-</span></dt>
-                        <dd class="total_grid">
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" aria-valuenow="50"
-                                     aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
-                                    50%
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="since_today">today</th>
+                            <td class="status_today">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="50"
+                                         aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
+                                        50%
+                                    </div>
+                                    <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="50"
+                                         aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
+                                        50%
+                                    </div>
                                 </div>
-                            </div>
-                        </dd>
-                    </dl>
-                    <hr>
-                    <dl class="dl-horizontal batt">
-                        <dt><i class="fa fa-recycle"></i> on batt. since</dt>
-                        <dd class="on_batt_since">-</dd>
-                        <dt>batt. use today</dt>
-                        <dd class="total_batt_today">
-                            <div class="progress">
-                                <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="50"
-                                     aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
-                                    50%
-                                </div>
-                            </div>
-                        </dd>
-                        <dt>...since <span class="since">-</span></dt>
-                        <dd class="total_batt">
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" aria-valuenow="50"
-                                     aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
-                                    50%
-                                </div>
-                            </div>
-                        </dd>
-                    </dl>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="since_last">now</th>
+                            <td class="status_last text-center text-bold">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+
                 </div>
             </div>
         </div>

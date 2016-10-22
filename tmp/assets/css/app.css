@@ -27,15 +27,13 @@ body {
     margin-bottom: 10px;
 }
 
-hr {
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-
-dl {
+#summary .progress {
     margin-bottom: 0;
 }
 
-#summary .progress {
-    margin-bottom: 4px;
+#summary table > * > tr > *:first-child {
+    white-space: nowrap;
+}
+.table {
+    margin-bottom: 10px;
 }
