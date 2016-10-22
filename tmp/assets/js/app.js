@@ -346,7 +346,7 @@ $(document).ready(function () {
             progress(
                 $s.find('.status_today .progress'),
                 [percentize(totals.today.on, 0, now - start_of_day), null],
-                [totals.today.on.format('H:mm:ss'), totals.today.off.format('H:mm:ss')],
+                [totals.today.on.format('H:mm'), totals.today.off.format('H:mm')],
                 ['success', 'warning']
             );
 
@@ -354,7 +354,7 @@ $(document).ready(function () {
             progress(
                 $s.find('.status_all .progress'),
                 [percentize(totals.all.on, 0, now - START), null],
-                [totals.all.on.format('H:mm:ss'), totals.all.off.format('H:mm:ss')],
+                [totals.all.on.format('d[d] H:mm'), totals.all.off.format('d[d] H:mm')],
                 ['success', 'warning']
             );
         },
