@@ -1,0 +1,10 @@
+*.png
+
+/latests/
+!/latests/.gitkeep
+
+/assets/cam/
+!/assets/cam/.gitkeep
+
+/assets/flot/exemples/
+

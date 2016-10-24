@@ -1,19 +1,44 @@
 #!/usr/bin/env python
-import re
-import time
+# coding=utf-8
+import atexit
 import json
+import re
 import serial
+import time
+
 from common import log
+from lib import LATESTS_RESULTS_PATH
 
-from lib import BASE_PATH
-
-LATESTS_RESULTS_PATH = BASE_PATH + '/tmp/latests'
+_serial = None
 
 
-def send(serial, command):
-    serial.write('{0:s}\r'.format(command))
-    serial.flush()
-    return serial.readline()
+def serial_port():
+    global _serial
+    if _serial is None:
+        _serial = serial.Serial(
+            port = '/dev/ttyUSB0',
+            baudrate = 2400,
+            parity = serial.PARITY_NONE,
+            stopbits = serial.STOPBITS_ONE,
+            bytesize = serial.EIGHTBITS,
+            timeout = 1
+        )
+    return _serial
+
+
+def serial_send(command):
+    s = serial_port()
+    s.write('{0:s}\r'.format(command))
+    s.flush()
+    return s.readline()
+
+
+@atexit.register
+def serial_close():
+    global _serial
+    if _serial is not None:
+        _serial.close()
+        _serial = None
 
 
 class TooManyTriesException(Exception):
@@ -21,22 +46,6 @@ class TooManyTriesException(Exception):
 
 
 class Command(object):
-
-    _serial = None
-
-    @staticmethod
-    def serial():
-        if not Command._serial:
-            Command._serial = serial.Serial(
-                port = '/dev/ttyUSB0',
-                baudrate = 2400,
-                parity = serial.PARITY_NONE,
-                stopbits = serial.STOPBITS_ONE,
-                bytesize = serial.EIGHTBITS,
-                timeout = 1
-            )
-        return Command._serial
-
     def __init__(self, code, pretty_name = None):
         self.code = code
         self.last_result = None
@@ -64,7 +73,7 @@ class Command(object):
 
             tries += 1
             try:
-                res = send(Command.serial(), self.code)
+                res = serial_send(self.code)
             except serial.SerialException:
                 continue
 

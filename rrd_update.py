@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 import time
 from lib import *
 
@@ -8,7 +9,7 @@ def main():
 
     while not exiting_app:
         msg = status.send(max_tries = 0)
-        rrd.update_ep3000(st_payload = msg['payload'])
+        rrd.update_ep3k(st_payload = msg['payload'])
         time.sleep(.1)
 
 

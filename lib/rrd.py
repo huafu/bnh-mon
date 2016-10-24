@@ -2,28 +2,10 @@
 # coding=utf-8
 import json
 import os
-import time
 import rrdtool
-from constants import BASE_PATH
+import time
 
-FILE_EP3K_STATUS = BASE_PATH + '/rrd/ep3000.rrd'
-FILE_EP3K_UPS = BASE_PATH + '/rrd/ep3000-ups.rrd'
-TMP_PATH = BASE_PATH + '/tmp'
-
-EP3K_DATA_NAMES = (
-    {'name': 'input_voltage', 'unit': 'V', 'label': 'Input Voltage', 'color': '#276000', 'group': 'voltages'},
-    {'name': 'input_fault_voltage', 'unit': 'V', 'label': 'Input Fault Volt.', 'color': '#9AFB00', 'group': 'voltages'},
-    {'name': 'output_voltage', 'unit': 'V', 'label': 'Output Voltage', 'color': '#A20B02', 'group': 'voltages'},
-    {'name': 'output_load', 'unit': '%', 'label': 'Load Percent', 'color': '#FB6600', 'group': 'others'},
-    {'name': 'output_frequency', 'unit': 'Hz', 'label': 'Output Frequency', 'color': '#D16502', 'group': 'others'},
-    {'name': 'battery_voltage', 'unit': 'V', 'label': 'Battery Voltage', 'color': '#09629E', 'group': 'others'},
-    {'name': 'temperature', 'unit': '°C', 'label': 'Temperature', 'color': '#9500FC', 'group': 'others'},
-)
-
-EP3K_GROUPS = {
-    'voltages': {'unit': 'Volts'},
-    'others': {'unit': 'Values'},
-}
+from lib import FILE_EP3K_STATUS, FILE_EP3K_UPS, TMP_PATH, EP3K_DATA_NAMES, EP3K_GROUPS
 
 
 def create_ep3k_status():
@@ -61,7 +43,7 @@ def create_ep3k_ups():
     )
 
 
-def update_ep3000(st_payload = None, ups_payload = None):
+def update_ep3k(st_payload = None, ups_payload = None):
     if st_payload:
         values = 'N:%s:%s:%s:%s:%s:%s:%s' % (
             st_payload['input_voltage'],

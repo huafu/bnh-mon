@@ -1,24 +1,28 @@
 #!/usr/bin/env python
+# coding=utf-8
+import time
 
-import rrdtool
-from lib import *
-from lib.rrd import create_ep3k_ups
+import Image
+
+import lib.cam2 as cam2
+import cv2
 
 
 def main():
-    im = read()
-    save(im)
-    print bound(im)
-    #print ep3000.StatusCommand().send()['payload']
-    #print ep3000.UpsRatingCommand().send()['payload']
-    #print create_ep3k_ups()
+
+    # print bound_and_ocr(take_picture())
+    # print read_and_parse()
+    # print ocr_image(take_picture())
+    # print ep3000.StatusCommand().send()['payload']
+    # print ep3000.UpsRatingCommand().send()['payload']
+    # print create_ep3k_ups()
     # rrd.generate_graphs()
     # rrdtool.fetch(
     #    rrd.FILE_EP3000,
     #    'AVERAGE',
     #    '--start -4h'
     # )
-    #rrd_to_json()
+    # rrd_to_json()
 
 
 exiting_app = False
