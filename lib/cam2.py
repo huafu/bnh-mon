@@ -7,7 +7,7 @@ import time
 import cv2
 import imutils
 
-from lib import VIDEO_DEVICE_NAME, VIDEO_DEVICE_INDEX, DISPLAYS_OFFSET, DISPLAYS
+from lib import CAMS_PATH, VIDEO_DEVICE_NAME, VIDEO_DEVICE_INDEX, DISPLAYS_OFFSET, DISPLAYS
 
 _video = None
 
@@ -83,10 +83,10 @@ def test(which = 0):
     im = take_picture()
 
     im_rgb = grab_display(im, which)
-    cv2.imwrite('%s.jpg' % (name), im_rgb)
+    cv2.imwrite('%s/%s.jpg' % (CAMS_PATH, name), im_rgb)
 
     im_gray = grayscale(im_rgb)
-    cv2.imwrite('%s-gray.jpg' % (name), im_gray)
+    cv2.imwrite('%s/%s-gray.jpg' % (CAMS_PATH, name), im_gray)
 
     im_bw = black_and_white(im_gray)
-    cv2.imwrite('%s-bw.jpg' % (name), im_bw)
+    cv2.imwrite('%s/%s-bw.jpg' % (CAMS_PATH, name), im_bw)

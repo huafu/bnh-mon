@@ -1,28 +1,10 @@
 #!/usr/bin/env python
 # coding=utf-8
-import time
-
-import Image
-
-import lib.cam2 as cam2
-import cv2
+from lib import cam2
 
 
 def main():
-
-    # print bound_and_ocr(take_picture())
-    # print read_and_parse()
-    # print ocr_image(take_picture())
-    # print ep3000.StatusCommand().send()['payload']
-    # print ep3000.UpsRatingCommand().send()['payload']
-    # print create_ep3k_ups()
-    # rrd.generate_graphs()
-    # rrdtool.fetch(
-    #    rrd.FILE_EP3000,
-    #    'AVERAGE',
-    #    '--start -4h'
-    # )
-    # rrd_to_json()
+    for i in range(3): cam2.test(i)
 
 
 exiting_app = False

@@ -16,6 +16,7 @@ DISPLAYS = [
     {'x': -8, 'y': 248, 'width': 287, 'height': 84, 'numbers': 5, 'name': 'bottom'},
 ]
 LATESTS_RESULTS_PATH = BASE_PATH + '/public/latests'
+CAMS_PATH = BASE_PATH + '/public/assets/cam'
 FILE_EP3K_STATUS = BASE_PATH + '/rrd/ep3000.rrd'
 FILE_EP3K_UPS = BASE_PATH + '/rrd/ep3000-ups.rrd'
 TMP_PATH = BASE_PATH + '/public'
